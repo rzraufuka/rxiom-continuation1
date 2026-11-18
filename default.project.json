@@ -83,7 +83,8 @@
 				"GetPerpCandles": { "$className": "RemoteFunction" },
 				"CreateAlert": { "$className": "RemoteFunction" },
 				"DeleteAlert": { "$className": "RemoteFunction" },
-				"BuyUpgrade": { "$className": "RemoteFunction" }
+				"BuyUpgrade": { "$className": "RemoteFunction" },
+				"SetFavorite": { "$className": "RemoteFunction" }
 			}
 		},
 		"ServerScriptService": {

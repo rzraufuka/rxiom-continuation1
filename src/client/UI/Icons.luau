@@ -284,17 +284,22 @@ function Icons.search(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
-function Icons.star(size: number, color: Color3, order: number?): Frame
+function Icons.star(size: number, color: Color3, order: number?, selected: boolean?): Frame
 	local frame = box("StarIcon", size, order)
-	local c = Vector2.new(size / 2, size * 0.54)
-	local vertices = {}
-	for i = 0, 4 do
-		local rad = math.rad(i * 72 - 90)
-		vertices[i] = c + Vector2.new(math.cos(rad), math.sin(rad)) * size * 0.48
+	local center = Vector2.new(size / 2, size / 2)
+	local vertices: { Vector2 } = {}
+	for i = 0, 9 do
+		local rad = math.rad(i * 36 - 90)
+		local radius = size * (if i % 2 == 0 then 0.44 else 0.21)
+		vertices[i + 1] = center + Vector2.new(math.cos(rad), math.sin(rad)) * radius
 	end
-	-- Pentagram: każdy wierzchołek łączony z co drugim.
-	for i = 0, 4 do
-		line(frame, vertices[i], vertices[(i + 2) % 5], 2, color)
+	if selected == true then
+		rasterize(frame, { vertices }, Rect.new(0, 0, size, size), math.max(1, math.ceil(size)), color)
+	else
+		local thickness = math.max(1.25, size * 0.09)
+		for i, vertex in vertices do
+			line(frame, vertex, vertices[i % #vertices + 1], thickness, color)
+		end
 	end
 	return frame
 end

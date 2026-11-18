@@ -20,6 +20,7 @@ local Theme = require(UI.Theme)
 local Toast = require(UI.Toast)
 local Util = require(UI.Util)
 local CreateCoin = require(script.Parent.CreateCoin)
+local FavoriteButton = require(script.Parent.FavoriteButton)
 local QuickBuy = require(script.Parent.QuickBuy)
 
 type CoinDef = Coins.CoinDef
@@ -109,6 +110,12 @@ local function pulseRow(def: CoinDef, openCoin: (string) -> ()): Row
 	icon.AnchorPoint = Vector2.new(0, 0.5)
 	icon.Position = UDim2.fromScale(0, 0.5)
 	icon.Parent = content
+	local favorite = FavoriteButton.new(def.Ticker)
+	favorite.Size = UDim2.fromOffset(32, 32)
+	favorite.AnchorPoint = Vector2.new(0.5, 0.5)
+	favorite.Position = UDim2.new(0, ICON_SIZE - 6, 0.5, ICON_SIZE / 2 - 6)
+	favorite.ZIndex = 2
+	favorite.Parent = content
 
 	-- Środek: nazwa, wiek i twórca, pasek bonding curve
 	local middle = create("Frame", {

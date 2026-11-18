@@ -20,6 +20,7 @@ local Icons = require(UI.Icons)
 local Sparkline = require(UI.Sparkline)
 local Theme = require(UI.Theme)
 local Util = require(UI.Util)
+local FavoriteButton = require(script.Parent.FavoriteButton)
 local QuickBuy = require(script.Parent.QuickBuy)
 
 type CoinDef = Coins.CoinDef
@@ -69,16 +70,6 @@ local function pill(name: string, width: number): TextButton
 		BackgroundColor3 = Colors.Elevated,
 		Text = "",
 	}, { Util.round() })
-end
-
-local function dots(parent: Instance)
-	local group = Util.group("Dots", 0, Util.hlist(3, nil, Enum.HorizontalAlignment.Center))
-	group.AnchorPoint = Vector2.new(0.5, 0.5)
-	group.Position = UDim2.fromScale(0.5, 0.5)
-	group.Parent = parent
-	for i = 1, 3 do
-		Icons.dot(4, Colors.Text, i).Parent = group
-	end
 end
 
 local function sortValue(sort: string, coin: CoinSnapshot, timeframe: string): number
@@ -317,19 +308,11 @@ local function priceRow(def: CoinDef, openCoin: (string) -> ()): PriceRow
 		Parent = row,
 	}, { Util.round() })
 	Util.hoverBackground(buy, Colors.Primary, Colors.PrimaryHover)
-	local more: TextButton = create("TextButton", {
-		Name = "More",
-		AutoButtonColor = false,
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -4, 0.5, 0),
-		Size = UDim2.fromOffset(34, 34),
-		BackgroundColor3 = Colors.Elevated,
-		Text = "",
-		ZIndex = 2,
-		Parent = row,
-	}, { Util.round() })
-	dots(more)
-	Util.hoverBackground(more, Colors.Elevated, Colors.Border)
+	local favorite = FavoriteButton.new(def.Ticker)
+	favorite.AnchorPoint = Vector2.new(1, 0.5)
+	favorite.Position = UDim2.new(1, -4, 0.5, 0)
+	favorite.ZIndex = 2
+	favorite.Parent = row
 
 	local buying = false
 	buy.Activated:Connect(function()
@@ -341,9 +324,6 @@ local function priceRow(def: CoinDef, openCoin: (string) -> ()): PriceRow
 		Actions.buy(def.Ticker, Settings.State.QuickBuy)
 		buying = false
 		buy.Text = "Buy"
-	end)
-	more.Activated:Connect(function()
-		openCoin(def.Ticker)
 	end)
 	row.Activated:Connect(function()
 		openCoin(def.Ticker)

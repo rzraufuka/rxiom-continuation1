@@ -25,6 +25,7 @@ local Fonts = Theme.Fonts
 local NAV_ITEMS = { "Discover", "Pulse", "Trackers", "Perpetuals", "Portfolio", "Upgrades" }
 
 export type Navigation = {
+	Favorites: () -> (),
 	Discover: () -> (),
 	Pulse: () -> (),
 	Trackers: () -> (),
@@ -174,7 +175,7 @@ function TopBar.new(nav: Navigation): TopBar
 	local navButtons: { [string]: TextButton } = {}
 	local active = "Discover"
 	-- Aktywna zakładka ma podświetlone tło (pigułkę), pozostałe tylko tekst.
-	local function setActive(name: string)
+	local function setNavActive(name: string)
 		active = name
 		for itemName, b in navButtons do
 			local isActive = itemName == active
@@ -286,11 +287,19 @@ function TopBar.new(nav: Navigation): TopBar
 	star.AnchorPoint = Vector2.new(0.5, 0.5)
 	star.Position = UDim2.fromScale(0.5, 0.5)
 	star.Parent = favorites
+	local activeStar = Icons.star(18, Colors.Yellow, nil, true)
+	activeStar.AnchorPoint = star.AnchorPoint
+	activeStar.Position = star.Position
+	activeStar.Visible = false
+	activeStar.Parent = favorites
 	Util.hoverBackground(favorites, Colors.Elevated, Colors.Border)
 	favorites.Parent = right
-	favorites.Activated:Connect(function()
-		Toast.show("Favorites are coming soon", "Info")
-	end)
+	favorites.Activated:Connect(nav.Favorites)
+	local function setActive(name: string)
+		setNavActive(name)
+		star.Visible = name ~= "Favorites"
+		activeStar.Visible = name == "Favorites"
+	end
 
 	local wallet = pillButton("Wallet", 6)
 	Util.padding(0, 14).Parent = wallet
