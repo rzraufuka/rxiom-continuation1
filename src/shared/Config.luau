@@ -109,6 +109,32 @@ local Config = {
 		Timeframes = { 60, 300, 900, 3600 },
 		LeveragePresets = { 1, 2, 5, 10, 20 },
 	},
+
+	-- Breaking News: a headline about one established coin every MinGap-MaxGap seconds (counted
+	-- from the previous announcement). After a Lead the coin may move for Duration seconds.
+	News = {
+		FirstDelay = 300,
+		MinGap = 600,
+		MaxGap = 900,
+		-- Studio: first headline soon after starting a test, and shorter gaps.
+		StudioFirstDelay = 20,
+		StudioMinGap = 90,
+		StudioMaxGap = 150,
+		LeadMin = 45,
+		LeadMax = 90,
+		DurationMin = 60,
+		DurationMax = 100,
+		-- Smaller coins swing ±25-45% within minutes anyway, so a headline would drown in noise.
+		MinMarketCap = 400_000,
+		-- Share of headlines from a confirmed source, and how often each kind comes true.
+		ConfirmedShare = 0.4,
+		ConfirmedOdds = 0.8,
+		RumorOdds = 0.45,
+		-- Bots' buy-chance shift and trade-rate multiplier for the largest coins; scaled down for
+		-- smaller ones. Tuned so a true headline usually moves the price 14-22% (median).
+		Bias = 0.3,
+		Boost = 2.5,
+	},
 }
 
 return table.freeze(Config)

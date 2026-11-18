@@ -349,10 +349,33 @@ export type PerpOrderRequest = {
 	SL: number?,
 }
 
+-- Breaking News: a headline about one coin that bots may or may not act on. Times are server
+-- time (Market.now()). The same Id is sent again with Resolved = true when the window ends.
+export type NewsEvent = {
+	Id: number,
+	Ticker: string,
+	Headline: string,
+	-- 1 when the headline is bullish, -1 when bearish.
+	Direction: number,
+	-- "Confirmed" news plays out far more often than a "Rumor".
+	Source: "Confirmed" | "Rumor",
+	AnnouncedAt: number,
+	-- Window in which the move happens, if it happens.
+	StartsAt: number,
+	EndsAt: number,
+	Resolved: boolean,
+	Happened: boolean?,
+	-- Price change in % from the announcement to the end of the window.
+	Change: number?,
+	Result: string?,
+}
+
 export type InitialState = {
 	Market: MarketSnapshot,
 	Trades: { [string]: { TradeEvent } },
 	Portfolio: PortfolioState?,
+	-- Unresolved Breaking News event, if one is running.
+	News: NewsEvent?,
 }
 
 return {}

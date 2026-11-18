@@ -15,6 +15,7 @@ local Amm = require(ReplicatedStorage.Shared.Amm)
 local Career = require(script.Parent.Career)
 local Launchpad = require(script.Parent.Launchpad)
 local Market = require(script.Parent.Market)
+local News = require(script.Parent.News)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
 local Tracker = require(script.Parent.Tracker)
@@ -705,6 +706,7 @@ function Trading.start()
 			Market = Market.snapshot(),
 			Trades = Market.recentTrades(),
 			Portfolio = portfolio(player),
+			News = News.current(),
 		}
 	end
 

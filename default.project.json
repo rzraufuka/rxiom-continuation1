@@ -63,6 +63,7 @@
 				"CompleteTutorial": { "$className": "RemoteEvent" },
 				"AlertTriggered": { "$className": "RemoteEvent" },
 				"PulseRadar": { "$className": "RemoteEvent" },
+				"MarketNews": { "$className": "RemoteEvent" },
 				"GetInitialState": { "$className": "RemoteFunction" },
 				"Login": { "$className": "RemoteFunction" },
 				"GetCandles": { "$className": "RemoteFunction" },

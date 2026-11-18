@@ -20,6 +20,11 @@ local sentiment: { [string]: number } = {}
 -- Błądzi losowo z rzadkimi skokami, więc część coinów pompuje aż do migracji, a część umiera.
 local hype: { [string]: number } = {}
 
+-- Breaking News: for a time window bots lean toward buying (Bias > 0) or selling (Bias < 0) and
+-- trade Boost times more often, so a headline that comes true visibly moves the price.
+type Push = { Bias: number, From: number, Until: number, Boost: number }
+local pushes: { [string]: Push } = {}
+
 local function walletName(): string
 	local function part(n: number): string
 		local chars = table.create(n)
@@ -45,13 +50,13 @@ local LAUNCH_PULL = 0.3
 local LAUNCH_PULL_MAX = 0.45
 local LAUNCH_SIZE = 1.3
 
-local function trade(ticker: string, state: Market.CoinState, s: number, t: number)
+local function trade(ticker: string, state: Market.CoinState, s: number, t: number, bias: number)
 	local pool = state.Pool
 	local launched = state.Def.Creator ~= nil
 	local pull = if launched then LAUNCH_PULL else 0.2
 	local pullMax = if launched then LAUNCH_PULL_MAX else 0.35
 	local reversion = math.clamp(pull * math.log(anchor(ticker, state) / Amm.price(pool)), -pullMax, pullMax)
-	local buyChance = math.clamp(0.5 + s + reversion, 0.08, 0.92)
+	local buyChance = math.clamp(0.5 + s + reversion + bias, 0.08, 0.92)
 	-- Rozkład z długim ogonem: zwykle małe transakcje, czasem wieloryb. Duże coiny ruszają się spokojniej.
 	local calm = math.clamp(1 - math.log10(state.Def.MarketCap / 1e4) * 0.22, 0.25, 1)
 	local size = pool.Rx * (0.0006 + rng:NextNumber() ^ 3 * 0.015) * calm * (if launched then LAUNCH_SIZE else 1)
@@ -85,10 +90,16 @@ local function stepCoin(ticker: string, state: Market.CoinState, dt: number, t: 
 	end
 
 	-- Oczekiwana liczba transakcji w kroku; przy dłuższym kroku (rozgrzewka) bywa ich kilka.
-	local expected = state.Def.Activity * dt
+	local push = pushes[ticker]
+	if push and t >= push.Until then
+		pushes[ticker] = nil
+		push = nil
+	end
+	local active = push ~= nil and t >= push.From
+	local expected = state.Def.Activity * dt * (if active then (push :: Push).Boost else 1)
 	local count = math.floor(expected) + (if rng:NextNumber() < expected % 1 then 1 else 0)
 	for _ = 1, count do
-		trade(ticker, state, s, t)
+		trade(ticker, state, s, t, if active then (push :: Push).Bias else 0)
 	end
 end
 
@@ -105,6 +116,13 @@ end
 function Bots.forget(ticker: string)
 	sentiment[ticker] = nil
 	hype[ticker] = nil
+	pushes[ticker] = nil
+end
+
+-- Breaking News: between market times `from` and `untilT` bots on `ticker` add `bias` to their
+-- buy chance and trade `boost` times as often. Replaces any earlier push on the coin.
+function Bots.push(ticker: string, bias: number, from: number, untilT: number, boost: number)
+	pushes[ticker] = { Bias = bias, From = from, Until = untilT, Boost = boost }
 end
 
 -- Symuluje ostatnie Config.WarmupSeconds handlu (lub krócej, jeśli coin jest młodszy), żeby zmiana
