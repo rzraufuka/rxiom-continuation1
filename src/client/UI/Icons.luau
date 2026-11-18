@@ -284,24 +284,18 @@ function Icons.search(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
-function Icons.star(size: number, color: Color3, order: number?, selected: boolean?): Frame
-	local frame = box("StarIcon", size, order)
-	local center = Vector2.new(size / 2, size / 2)
-	local vertices: { Vector2 } = {}
-	for i = 0, 9 do
-		local rad = math.rad(i * 36 - 90)
-		local radius = size * (if i % 2 == 0 then 0.44 else 0.21)
-		vertices[i + 1] = center + Vector2.new(math.cos(rad), math.sin(rad)) * radius
-	end
-	if selected == true then
-		rasterize(frame, { vertices }, Rect.new(0, 0, size, size), math.max(1, math.ceil(size)), color)
-	else
-		local thickness = math.max(1.25, size * 0.09)
-		for i, vertex in vertices do
-			line(frame, vertex, vertices[i % #vertices + 1], thickness, color)
-		end
-	end
-	return frame
+function Icons.star(size: number, color: Color3, order: number?, selected: boolean?): ImageLabel
+	-- A single filtered texture keeps the five points aligned under fractional UIScale.
+	return create("ImageLabel", {
+		Name = "StarIcon",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(size, size),
+		LayoutOrder = order or 0,
+		Image = if selected then "rbxasset://textures/ui/InspectMenu/ico_favorite@3x.png"
+			else "rbxasset://textures/ui/InspectMenu/ico_favorite_off@3x.png",
+		ImageColor3 = color,
+		ScaleType = Enum.ScaleType.Fit,
+	})
 end
 
 -- Moneta RXI: kontury obrysowane z grafiki marki (współrzędne 0-1). Rysowana z ramek, więc tło

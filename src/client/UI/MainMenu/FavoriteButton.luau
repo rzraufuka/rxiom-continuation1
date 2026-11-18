@@ -20,7 +20,7 @@ function FavoriteButton.new(ticker: string): TextButton
 	}, { Util.round() })
 	Util.hoverBackground(button, Colors.Elevated, Colors.Border)
 
-	local icon: Frame? = nil
+	local icon: ImageLabel? = nil
 	local selected: boolean? = nil
 	local function refresh()
 		local saved = Favorites.has(ticker)
