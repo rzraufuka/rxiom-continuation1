@@ -49,18 +49,18 @@ end
 -- Kolejność jak na liście (Discover, dolny pasek). Coiny z dawnymi zaślepkami COIN1-COIN8 mają ich
 -- parametry, więc zapisane pozycje przenoszą się bez zmiany wartości (zob. Coins.rename).
 local List: { CoinDef } = {
-	coin("ROXI", "Roxi", "A855F7", 22 * DAY, 14_500_000, 213_000, 31281, 0.8, "Maskotka ekosystemu RXIOM"),
-	coin("BLOKI", "Blocki", "F7931A", 2 * DAY, 480_000, 41_000, 2940, 1.0, "Coin inspirowany blokowym światem Roblox"),
-	coin("NOOB", "Noobium", "F5C542", 38 * MINUTE, 117_000, 14_200, 1082, 1.4, "Memecoin z motywem klasycznego Nooba"),
-	coin("RUGB", "Rugby", "EF4444", 10 * MINUTE, 30_300, 7_030, 200, 1.1, "Żart z rug pullów, ale jako sympatyczna maskotka"),
-	coin("BLOX", "Bloxor", "38BDF8", 7 * DAY, 2_100_000, 96_000, 9850, 0.9, "Futurystyczny coin z blokowym motywem"),
-	coin("RIXI", "Rixie", "EC4899", 2 * MINUTE, 9_600, 2_550, 226, 1.2, "Mały, stylowy coin powiązany z RXI"),
-	coin("STUD", "Studz", "94A3B8", 3 * MINUTE, 11_900, 3_100, 150, 1.0, "Inspiracja charakterystycznymi studami Roblox"),
-	coin("MBLOX", "Moonblox", "526FFF", 15 * MINUTE, 64_000, 9_800, 512, 1.5, "Coin z motywem kosmosu i moonshotów"),
-	coin("RXT", "RXT", "2FE3AC", 90 * DAY, 12_400_000, 241_000, 80492, 0.6, "Token wyglądający jak poważny coin tradingowy"),
-	coin("NBC", "NoobCash", "84CC16", 4 * MINUTE, 26_800, 5_790, 386, 1.8, "Humorystyczny coin z motywem noobów"),
-	coin("PXR", "PixelR", "D946EF", 1 * MINUTE, 14_000, 3_540, 237, 1.6, "Pixel-artowy coin inspirowany Robloxem"),
-	coin("RPRIME", "Roxi Prime", "C4B5FD", 45 * DAY, 6_200_000, 158_000, 6120, 0.5, "Ekskluzywny, premium coin w ekosystemie RXIOM"),
+	coin("ROXI", "Roxi", "A855F7", 22 * DAY, 14_500_000, 213_000, 31281, 0.8, "The mascot of the RXIOM ecosystem"),
+	coin("BLOKI", "Blocki", "F7931A", 2 * DAY, 480_000, 41_000, 2940, 1.0, "A coin inspired by the blocky world of Roblox"),
+	coin("NOOB", "Noobium", "F5C542", 38 * MINUTE, 117_000, 14_200, 1082, 1.4, "A memecoin starring the classic Noob"),
+	coin("RUGB", "Rugby", "EF4444", 10 * MINUTE, 30_300, 7_030, 200, 1.1, "A joke about rug pulls, as a friendly mascot"),
+	coin("BLOX", "Bloxor", "38BDF8", 7 * DAY, 2_100_000, 96_000, 9850, 0.9, "A futuristic coin with a blocky theme"),
+	coin("RIXI", "Rixie", "EC4899", 2 * MINUTE, 9_600, 2_550, 226, 1.2, "A small, stylish coin tied to RXI"),
+	coin("STUD", "Studz", "94A3B8", 3 * MINUTE, 11_900, 3_100, 150, 1.0, "Inspired by the iconic Roblox studs"),
+	coin("MBLOX", "Moonblox", "526FFF", 15 * MINUTE, 64_000, 9_800, 512, 1.5, "A space-themed coin built for moonshots"),
+	coin("RXT", "RXT", "2FE3AC", 90 * DAY, 12_400_000, 241_000, 80492, 0.6, "A token that looks like a serious trading coin"),
+	coin("NBC", "NoobCash", "84CC16", 4 * MINUTE, 26_800, 5_790, 386, 1.8, "A funny coin themed around noobs"),
+	coin("PXR", "PixelR", "D946EF", 1 * MINUTE, 14_000, 3_540, 237, 1.6, "A pixel-art coin inspired by Roblox"),
+	coin("RPRIME", "Roxi Prime", "C4B5FD", 45 * DAY, 6_200_000, 158_000, 6120, 0.5, "An exclusive premium coin in the RXIOM ecosystem"),
 }
 
 -- Dawne tickery -> obecne. Stosowane przy wczytywaniu zapisanych profili.
