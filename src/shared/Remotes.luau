@@ -23,6 +23,7 @@ return table.freeze({
 	CompleteTutorial = event("CompleteTutorial"), -- klient -> serwer: samouczek obejrzany
 	AlertTriggered = event("AlertTriggered"), -- (AlertNotice)
 	PulseRadar = event("PulseRadar"), -- (RadarNotice): nowy coin na Pulse dla graczy z Pulse Radar
+	MarketNews = event("MarketNews"), -- (NewsEvent): Breaking News announced, then again when resolved
 
 	-- klient -> serwer
 	GetInitialState = func("GetInitialState"), -- () -> InitialState

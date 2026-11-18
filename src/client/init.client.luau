@@ -40,6 +40,11 @@ Login.show(menu, function()
 	end
 end)
 
+-- After Login.show has locked the menu, so a news event in progress appears as a pill, not a pop.
+if initial.News then
+	menu.ShowNews(initial.News)
+end
+
 Remotes.Notify.OnClientEvent:Connect(function(notice: Types.Notice)
 	Toast.show(notice.Text, notice.Kind)
 end)

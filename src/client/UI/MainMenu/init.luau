@@ -8,11 +8,13 @@ local StarterGui = game:GetService("StarterGui")
 local TextChatService = game:GetService("TextChatService")
 
 local Remotes = require(game:GetService("ReplicatedStorage").Shared.Remotes)
+local Types = require(game:GetService("ReplicatedStorage").Shared.Types)
 
 local UI = script.Parent
 local Browser = require(UI.Browser)
 local AlertBanner = require(UI.AlertBanner)
 local CoinBurst = require(UI.CoinBurst)
+local NewsBanner = require(UI.NewsBanner)
 local Theme = require(UI.Theme)
 local Toast = require(UI.Toast)
 local Tutorial = require(UI.Tutorial)
@@ -97,6 +99,8 @@ export type Handle = {
 	ShowDiscover: () -> (),
 	-- Otwiera okno wyboru ścieżki Trader Career.
 	OpenCareer: () -> (),
+	-- Breaking News banner (late joiners get the running event from InitialState).
+	ShowNews: (event: Types.NewsEvent) -> (),
 }
 
 function MainMenu.mount(): Handle
@@ -334,6 +338,22 @@ function MainMenu.mount(): Handle
 			end)
 		end
 	end)
+	NewsBanner.mount(site, {
+		OpenCoin = function(ticker: string)
+			if not locked then
+				openCoin(ticker)
+			end
+		end,
+		OpenAlert = alertDialog.Open,
+	})
+	NewsBanner.setSuppressed(function()
+		return locked or Tutorial.isActive()
+	end)
+	Remotes.MarketNews.OnClientEvent:Connect(function(event: any)
+		if typeof(event) == "table" and typeof(event.Ticker) == "string" and typeof(event.Id) == "number" then
+			NewsBanner.show(event)
+		end
+	end)
 	Remotes.TransferReceived.OnClientEvent:Connect(function(notice: any)
 		if typeof(notice) ~= "table" or typeof(notice.Amount) ~= "number" then
 			return
@@ -387,6 +407,7 @@ function MainMenu.mount(): Handle
 		Targets = targets,
 		ShowDiscover = navigation.Discover,
 		OpenCareer = openCareer,
+		ShowNews = NewsBanner.show,
 		Lock = function(path: string)
 			locked = true
 			browser.SetPath(path)
