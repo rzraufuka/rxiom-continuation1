@@ -37,7 +37,12 @@ export type Profile = {
 	Upgrades: { [string]: number },
 	Favorites: { string },
 	Career: Types.CareerState,
+	-- Since You Left: state at the last save before this session (time, portfolio value, prices).
+	-- Never updated in memory, so the summary compares against the previous visit.
+	Seen: Seen?,
 }
+
+export type Seen = { At: number, Value: number, Prices: { [string]: number } }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 local WALLET_LENGTH = 24
@@ -61,6 +66,8 @@ PlayerData.MaxReceived = MAX_RECEIVED
 local profiles: { [Player]: Profile } = {}
 -- Profil, którego nie udało się wczytać, nie jest zapisywany, żeby nie nadpisać prawdziwych danych.
 local saveable: { [Player]: boolean } = {}
+-- Builds the Since You Left snapshot at save time (set by Recap, which knows market prices).
+local snapshot: ((player: Player, profile: Profile) -> Seen?)? = nil
 
 local store: DataStore? = nil
 do
@@ -177,6 +184,26 @@ local function sanitizeAlerts(raw: any): { Types.PriceAlert }
 	return alerts
 end
 
+local function sanitizeSeen(raw: any): Seen?
+	if typeof(raw) ~= "table" or not finite(raw.At) or not finite(raw.Value) then
+		return nil
+	end
+	local prices: { [string]: number } = {}
+	local count = 0
+	if typeof(raw.Prices) == "table" then
+		for ticker, price in raw.Prices do
+			if count >= Config.Recap.MaxPrices then
+				break
+			end
+			if typeof(ticker) == "string" and Coins.validTicker(Coins.rename(ticker)) and finite(price) and price > 0 then
+				prices[Coins.rename(ticker)] = price
+				count += 1
+			end
+		end
+	end
+	return { At = raw.At, Value = math.max(0, raw.Value), Prices = prices }
+end
+
 local function sanitize(data: any): Profile
 	if typeof(data) ~= "table" or not finite(data.Balance) then
 		return defaultProfile()
@@ -196,6 +223,7 @@ local function sanitize(data: any): Profile
 		Upgrades = {},
 		Favorites = sanitizeFavorites(data.Favorites or data.FavoriteTickers),
 		Career = Career.sanitize(data.Career),
+		Seen = sanitizeSeen(data.Seen),
 	}
 	if typeof(data.Received) == "table" then
 		for _, id in data.Received do
@@ -313,6 +341,10 @@ local function save(player: Player): boolean
 	if not profile or not saveable[player] or not store then
 		return false
 	end
+	-- A broken snapshot must never block saving the profile itself.
+	local seenOk, seen = pcall(function(): Seen?
+		return if snapshot then snapshot(player, profile) else nil
+	end)
 	local payload = {
 		Balance = profile.Balance,
 		Positions = profile.Positions,
@@ -328,6 +360,8 @@ local function save(player: Player): boolean
 		Upgrades = profile.Upgrades,
 		Favorites = profile.Favorites,
 		Career = profile.Career,
+		-- Fresh snapshot for the next visit; profile.Seen keeps the previous one.
+		Seen = if seenOk then seen else nil,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload
@@ -371,6 +405,10 @@ end
 -- Zapisuje profil od razu (np. po przelewie). Zwraca true, gdy zapis się udał.
 function PlayerData.saveNow(player: Player): boolean
 	return save(player)
+end
+
+function PlayerData.setSnapshot(fn: (player: Player, profile: Profile) -> Seen?)
+	snapshot = fn
 end
 
 -- Czy profile są w ogóle zapisywane (false np. w Studio bez dostępu do API).

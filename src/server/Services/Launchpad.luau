@@ -600,6 +600,17 @@ function Launchpad.active(): { [string]: Entry }
 	return active
 end
 
+-- Registry entries of coins launched by `userId` (on any server), for Since You Left.
+function Launchpad.createdBy(userId: number): { Entry }
+	local list = {}
+	for _, entry in known do
+		if entry.CreatorId == userId then
+			table.insert(list, entry)
+		end
+	end
+	return list
+end
+
 Launchpad.save = save
 
 return Launchpad

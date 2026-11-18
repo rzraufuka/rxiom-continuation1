@@ -78,6 +78,9 @@ local rng = Random.new()
 local active: NewsEvent? = nil
 local nextId = 0
 local lastTicker: string? = nil
+-- Resolved events from this server, newest last, for Since You Left.
+local HISTORY = 10
+local history: { NewsEvent } = {}
 
 local function fill(text: string, ticker: string): string
 	return (string.gsub(text, "{T}", ticker))
@@ -151,8 +154,23 @@ function News.run(wait: ((seconds: number) -> ())?): NewsEvent?
 	resolved.Change = (Amm.price(state.Pool) / startPrice - 1) * 100
 	resolved.Result = fill(if happens then scenario.Hit else scenario.Miss, def.Ticker)
 	active = nil
+	table.insert(history, resolved)
+	if #history > HISTORY then
+		table.remove(history, 1)
+	end
 	Remotes.MarketNews:FireAllClients(resolved)
 	return resolved
+end
+
+-- Events whose window ended after market time `t`, newest first.
+function News.resolvedSince(t: number): { NewsEvent }
+	local list = {}
+	for i = #history, 1, -1 do
+		if history[i].EndsAt > t then
+			table.insert(list, history[i])
+		end
+	end
+	return list
 end
 
 function News.start()
