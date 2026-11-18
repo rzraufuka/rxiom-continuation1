@@ -543,24 +543,26 @@ function Icons.close(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
--- Strzałka (wstecz / dalej w pasku przeglądarki, przycisk Send): długi trzon i dwa ramiona pod 45°
+-- Strzałka (wstecz / dalej w pasku przeglądarki, link na Discover): długi trzon i dwa ramiona pod 45°
 -- z zaokrąglonymi końcami.
 -- Built-in client texture: wings built from frames snap to whole pixels and look jagged at 14-20 px.
 -- The 48 px texture is cropped to its centred 36 px glyph so the arrow fills the box like before.
--- "Right" is the same image rotated, so both directions match exactly.
-function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", order: number?): ImageLabel
-	return create("ImageLabel", {
-		Name = "ArrowIcon",
+-- "Right" rotates the image inside a plain frame: UIListLayout ignores Rotation on its direct children.
+function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", order: number?): Frame
+	local frame = box("ArrowIcon", size, order)
+	create("ImageLabel", {
+		Name = "Image",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(size, size),
-		LayoutOrder = order or 0,
+		Size = UDim2.fromScale(1, 1),
 		Image = "rbxasset://textures/ui/LuaChat/icons/ic-back-android@2x.png",
 		ImageRectOffset = Vector2.new(6, 6),
 		ImageRectSize = Vector2.new(36, 36),
 		ImageColor3 = color,
 		Rotation = if direction == "Right" then 180 else 0,
 		ScaleType = Enum.ScaleType.Fit,
+		Parent = frame,
 	})
+	return frame
 end
 
 -- Duszek Ghostbox (portfel w grze): ręce w górę, jedno oko większe, uśmiech z różowym językiem.
