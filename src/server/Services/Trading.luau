@@ -18,6 +18,7 @@ local Market = require(script.Parent.Market)
 local News = require(script.Parent.News)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
+local Recap = require(script.Parent.Recap)
 local Tracker = require(script.Parent.Tracker)
 local Alerts = require(script.Parent.Alerts)
 local Perps = require(script.Parent.Perps)
@@ -295,7 +296,9 @@ local function restoreOrders(player: Player)
 		return
 	end
 	for _, order in table.clone(profile.Orders) do
-		activate(player, profile, order)
+		-- Fills here happened while the player was away: the price crossed the order meanwhile.
+		local tokens = activate(player, profile, order)
+		Recap.noteFill(player, order, tokens)
 	end
 end
 
@@ -675,6 +678,7 @@ function Trading.start()
 	Transfer.start(pushPortfolio)
 	Perps.start(pushPortfolio)
 	Alerts.start(pushPortfolio)
+	Recap.start(Trading.portfolioValue)
 	Remotes.CompleteTutorial.OnServerEvent:Connect(function(player: Player)
 		local profile = PlayerData.get(player)
 		if profile and not profile.TutorialDone then
@@ -711,6 +715,7 @@ function Trading.start()
 	end
 
 	PlayerData.Loaded:Connect(function(player: Player)
+		Recap.begin(player)
 		-- Coiny z Pulse, w których gracz ma udział, muszą być na rynku przed odtworzeniem zleceń.
 		Launchpad.ensureActive(player)
 		restoreOrders(player)
@@ -725,6 +730,7 @@ function Trading.start()
 		Perps.release(player)
 		Alerts.release(player)
 		PlayerData.release(player)
+		Recap.release(player)
 	end)
 	game:BindToClose(function()
 		for _, player in Players:GetPlayers() do

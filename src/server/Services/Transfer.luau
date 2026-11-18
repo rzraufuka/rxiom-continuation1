@@ -20,6 +20,7 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
 local PlayerData = require(script.Parent.PlayerData)
+local Recap = require(script.Parent.Recap)
 
 type ActionResult = Types.ActionResult
 
@@ -223,6 +224,7 @@ function Transfer.claim(player: Player)
 			table.insert(profile.Received, e.Id)
 			credited = true
 			Remotes.TransferReceived:FireClient(player, { Amount = e.Amount, From = string.sub(e.From, 1, 32) })
+			Recap.noteTransfer(player, e.Amount, string.sub(e.From, 1, 32))
 		end
 	end
 	while #profile.Received > PlayerData.MaxReceived do

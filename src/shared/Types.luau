@@ -370,6 +370,26 @@ export type NewsEvent = {
 	Result: string?,
 }
 
+-- Since You Left: what happened between the player's last save and this login. The server writes
+-- all text (English); the client only picks an icon and a button from Kind.
+export type RecapKind = "Transfer" | "Fill" | "Holder" | "Graduated" | "Mover" | "News" | "Faucet"
+export type RecapItem = {
+	Kind: RecapKind,
+	Text: string,
+	Detail: string?,
+	-- Coin to open from this row (Fill, Holder, Graduated, Mover, News).
+	Ticker: string?,
+	Tone: "Up" | "Down" | "Neutral",
+}
+export type Recap = {
+	-- Seconds since the last save before this login.
+	Away: number,
+	-- Portfolio value in RX now, and its change in % since the last save (nil if unknown).
+	Value: number,
+	Change: number?,
+	Items: { RecapItem },
+}
+
 export type InitialState = {
 	Market: MarketSnapshot,
 	Trades: { [string]: { TradeEvent } },
