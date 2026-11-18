@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Signal = require(ReplicatedStorage.Shared.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
+local Favorites = require(script.Parent.Favorites)
 
 local Portfolio = {}
 Portfolio.State = {
@@ -20,10 +21,12 @@ Portfolio.State = {
 	TutorialDone = false,
 	Alerts = {},
 	Upgrades = {},
+	Favorites = {},
 } :: Types.PortfolioState
 Portfolio.Changed = Signal.new() -- ()
 
 local function apply(state: Types.PortfolioState)
+	Favorites.start(state.Favorites)
 	Portfolio.State = state
 	Portfolio.Changed:Fire()
 end

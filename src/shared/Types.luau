@@ -121,6 +121,7 @@ export type PortfolioState = {
 	TutorialDone: boolean,
 	Alerts: { PriceAlert },
 	Upgrades: { [string]: number },
+	Favorites: { string },
 }
 
 -- Statystyki handlu gracza (zapisywane w profilu). Basis: tokeny i ich koszt w RX do liczenia

@@ -11,6 +11,7 @@ local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Signal = require(ReplicatedStorage.Shared.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local PerpEngine = require(script.Parent.PerpEngine)
 local Stats = require(script.Parent.Stats)
 
@@ -33,6 +34,7 @@ export type Profile = {
 	Alerts: { Types.PriceAlert },
 	-- Poziomy kupionych ulepszeń (Upgrades.luau).
 	Upgrades: { [string]: number },
+	Favorites: { string },
 }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -47,6 +49,7 @@ local STORE_NAME = "RXIOM_Profiles_v1"
 local AUTOSAVE_SECONDS = 60
 -- Ile ID zaksięgowanych przelewów trzymać w profilu.
 local MAX_RECEIVED = 200
+local MAX_FAVORITES = 100
 
 local PlayerData = {}
 PlayerData.Loaded = Signal.new() -- (player)
@@ -87,7 +90,28 @@ local function defaultProfile(): Profile
 		TutorialDone = false,
 		Alerts = {},
 		Upgrades = {},
+		Favorites = {},
 	}
+end
+
+local function sanitizeFavorites(raw: any): { string }
+	local favorites: { string } = {}
+	local seen: { [string]: boolean } = {}
+	if typeof(raw) ~= "table" then
+		return favorites
+	end
+	for _, item in raw do
+		local saved = if typeof(item) == "string" then item elseif typeof(item) == "table" then item.Ticker else nil
+		if typeof(saved) ~= "string" then
+			continue
+		end
+		local ticker = Coins.rename(saved)
+		if Coins.validTicker(ticker) and not seen[ticker] and #favorites < MAX_FAVORITES then
+			seen[ticker] = true
+			table.insert(favorites, ticker)
+		end
+	end
+	return favorites
 end
 
 local function sanitizeOrder(o: any): Types.BookOrder?
@@ -166,6 +190,7 @@ local function sanitize(data: any): Profile
 		TutorialDone = false,
 		Alerts = {},
 		Upgrades = {},
+		Favorites = sanitizeFavorites(data.Favorites or data.FavoriteTickers),
 	}
 	if typeof(data.Received) == "table" then
 		for _, id in data.Received do
@@ -296,6 +321,7 @@ local function save(player: Player): boolean
 		TutorialDone = profile.TutorialDone,
 		Alerts = profile.Alerts,
 		Upgrades = profile.Upgrades,
+		Favorites = profile.Favorites,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload
@@ -304,6 +330,35 @@ local function save(player: Player): boolean
 		warn(`[RXIOM] Failed to save data for {player.Name}:`, err)
 	end
 	return ok
+end
+
+local function setFavorite(player: Player, rawTicker: any, enabled: any): (boolean, string?)
+	if typeof(rawTicker) ~= "string" or not Coins.validTicker(rawTicker) or typeof(enabled) ~= "boolean" then
+		return false, "Invalid favorite request"
+	end
+
+	local ticker = Coins.rename(rawTicker)
+	local profile = PlayerData.waitFor(player, 15)
+	if not profile or player.Parent == nil then
+		return false, "Your data is still loading, try again"
+	end
+	if enabled and (rawTicker ~= ticker or not Coins.get(ticker)) then
+		return false, "That coin is not available"
+	end
+
+	local index = table.find(profile.Favorites, ticker)
+	if enabled then
+		if index then
+			return true, nil
+		end
+		if #profile.Favorites >= MAX_FAVORITES then
+			return false, `You can save up to {MAX_FAVORITES} favorites`
+		end
+		table.insert(profile.Favorites, ticker)
+	elseif index then
+		table.remove(profile.Favorites, index)
+	end
+	return true, nil
 end
 
 -- Zapisuje profil od razu (np. po przelewie). Zwraca true, gdy zapis się udał.
@@ -414,6 +469,7 @@ function PlayerData.saveAll()
 end
 
 function PlayerData.start()
+	Remotes.SetFavorite.OnServerInvoke = setFavorite
 	Players.PlayerAdded:Connect(load)
 	for _, player in Players:GetPlayers() do
 		task.spawn(load, player)

@@ -90,6 +90,7 @@ local function portfolio(player: Player): Types.PortfolioState?
 		TutorialDone = profile.TutorialDone,
 		Alerts = profile.Alerts,
 		Upgrades = profile.Upgrades,
+		Favorites = profile.Favorites,
 	}
 end
 

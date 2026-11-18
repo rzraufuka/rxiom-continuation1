@@ -21,6 +21,7 @@ local Util = require(UI.Util)
 local AlertDialog = require(script.AlertDialog)
 local BottomBar = require(script.BottomBar)
 local CoinView = require(script.CoinView)
+local FavoritesPage = require(script.FavoritesPage)
 local DiscoverPage = require(script.DiscoverPage)
 local PortfolioPage = require(script.PortfolioPage)
 local PerpsPage = require(script.PerpsPage)
@@ -34,7 +35,7 @@ local create = Util.create
 
 local CONTENT_PADDING = 32
 
-type Page = { Name: "Discover" | "Pulse" | "Trackers" | "Perpetuals" | "Upgrades" | "Coin" | "Portfolio", Ticker: string? }
+type Page = { Name: "Favorites" | "Discover" | "Pulse" | "Trackers" | "Perpetuals" | "Upgrades" | "Coin" | "Portfolio", Ticker: string? }
 
 local MainMenu = {}
 
@@ -66,6 +67,8 @@ end
 local function pagePath(page: Page): string
 	if page.Name == "Coin" then
 		return "/meme/" .. string.lower(page.Ticker or "")
+	elseif page.Name == "Favorites" then
+		return "/favorites"
 	elseif page.Name == "Portfolio" then
 		return "/portfolio"
 	elseif page.Name == "Pulse" then
@@ -141,6 +144,7 @@ function MainMenu.mount(): Handle
 	local browser: Browser.Browser
 	local topBar: TopBar.TopBar
 	local coinView: CoinView.CoinView
+	local favoritesPage: FavoritesPage.FavoritesPage
 	local portfolioPage: PortfolioPage.PortfolioPage
 	local pulsePage: PulsePage.PulsePage
 	local trackerPage: TrackerPage.TrackerPage
@@ -156,6 +160,8 @@ function MainMenu.mount(): Handle
 		end
 		if page.Name == "Coin" and page.Ticker then
 			coinView.Open(page.Ticker)
+		elseif page.Name == "Favorites" then
+			favoritesPage.Refresh()
 		elseif page.Name == "Portfolio" then
 			portfolioPage.Refresh()
 		elseif page.Name == "Pulse" then
@@ -167,12 +173,7 @@ function MainMenu.mount(): Handle
 		elseif page.Name == "Perpetuals" then
 			perpsPage.Refresh()
 		end
-		local section = page.Name
-		topBar.SetActive(
-			if section == "Portfolio" or section == "Pulse" or section == "Trackers" or section == "Perpetuals" or section == "Upgrades"
-				then section
-				else "Discover"
-		)
+		topBar.SetActive(if page.Name == "Coin" then "Discover" else page.Name)
 		if locked then
 			return
 		end
@@ -200,6 +201,11 @@ function MainMenu.mount(): Handle
 	end
 
 	local navigation: TopBar.Navigation = {
+		Favorites = function()
+			if not locked then
+				navigate({ Name = "Favorites" })
+			end
+		end,
 		Discover = function()
 			navigate({ Name = "Discover" })
 		end,
@@ -254,7 +260,18 @@ function MainMenu.mount(): Handle
 	discover.Frame.Parent = content
 	pages.Discover = discover.Frame
 
-	coinView = CoinView.new(navigation.Discover, function(ticker: string)
+	favoritesPage = FavoritesPage.new(openCoin, navigation.Discover)
+	favoritesPage.Frame.Parent = content
+	pages.Favorites = favoritesPage.Frame
+
+	coinView = CoinView.new(function()
+		if position > 1 then
+			position -= 1
+			render(history[position])
+		else
+			navigation.Discover()
+		end
+	end, function(ticker: string)
 		alertDialog.Open(ticker)
 	end)
 	coinView.Frame.Parent = content

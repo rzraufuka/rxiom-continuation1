@@ -22,6 +22,7 @@ local Chart = require(UI.Chart)
 local Icons = require(UI.Icons)
 local Theme = require(UI.Theme)
 local Util = require(UI.Util)
+local FavoriteButton = require(script.Parent.FavoriteButton)
 local OrderBookView = require(script.Parent.OrderBookView)
 local TradePanel = require(script.Parent.TradePanel)
 
@@ -212,6 +213,7 @@ function CoinView.new(onBack: () -> (), onAlerts: (ticker: string) -> ()): CoinV
 	end)
 	Portfolio.Changed:Connect(refreshAlertButton)
 
+	local favorite: TextButton? = nil
 	local stats = Util.group("Stats", 0, Util.hlist(36, nil, Enum.HorizontalAlignment.Right))
 	stats.AnchorPoint = Vector2.new(1, 0.5)
 	stats.Position = UDim2.fromScale(1, 0.5)
@@ -579,6 +581,13 @@ function CoinView.new(onBack: () -> (), onAlerts: (ticker: string) -> ()): CoinV
 				return
 			end
 			if newTicker ~= ticker then
+				if favorite then
+					favorite:Destroy()
+				end
+				local button = FavoriteButton.new(newTicker)
+				button.LayoutOrder = 5
+				button.Parent = headerLeft
+				favorite = button
 				chart.ResetView()
 			end
 			ticker = newTicker
