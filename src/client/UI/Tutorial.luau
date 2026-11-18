@@ -103,7 +103,7 @@ local STEPS: { Step } = {
 	},
 	{
 		Title = "You're ready!",
-		Body = "Tip: start small, take profits along the way, and never go all in on one coin. Good luck!",
+		Body = "Tip: start small, take profits along the way, and never go all in on one coin. Next, pick a Trader Career path.",
 	},
 }
 

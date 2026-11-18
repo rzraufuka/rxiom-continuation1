@@ -84,7 +84,8 @@
 				"CreateAlert": { "$className": "RemoteFunction" },
 				"DeleteAlert": { "$className": "RemoteFunction" },
 				"BuyUpgrade": { "$className": "RemoteFunction" },
-				"SetFavorite": { "$className": "RemoteFunction" }
+				"SetFavorite": { "$className": "RemoteFunction" },
+				"ChooseCareer": { "$className": "RemoteFunction" }
 			}
 		},
 		"ServerScriptService": {

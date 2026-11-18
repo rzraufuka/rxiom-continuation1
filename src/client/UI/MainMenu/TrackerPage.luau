@@ -381,6 +381,9 @@ function TrackerPage.new(openCoin: (string) -> ()): TrackerPage
 			Parent = row,
 		})
 		local sub = `@{profile.Name}`
+		if profile.Title then
+			sub = `{profile.Title}  ·  {sub}`
+		end
 		if profile.Wallet then
 			sub ..= "  ·  " .. shortWallet(profile.Wallet)
 		end
@@ -567,6 +570,9 @@ function TrackerPage.new(openCoin: (string) -> ()): TrackerPage
 		walletLabel.FontFace = Fonts.Mono
 		local badges = Util.group("Badges", 3, Util.hlist(8))
 		badges.Parent = identity
+		if profile.Title then
+			pill(profile.Title, 0, Colors.TextMuted).Parent = badges
+		end
 		if profile.Public or isMe then
 			pill(if profile.Rank then `#{profile.Rank} on leaderboard` else "Unranked", 1, Colors.Text).Parent = badges
 		end
@@ -717,14 +723,25 @@ function TrackerPage.new(openCoin: (string) -> ()): TrackerPage
 		image.AnchorPoint = Vector2.new(0, 0.5)
 		image.Position = UDim2.new(0, 32, 0.5, 0)
 		image.Parent = row
+		local hasTitle = entry.Title ~= nil
 		Util.label({
 			Text = entry.DisplayName .. (if entry.UserId == localUserId then " (you)" else ""),
 			Size = 15,
 			Font = Fonts.Medium,
-			Position = UDim2.fromOffset(72, 0),
-			FrameSize = UDim2.new(1, -190, 1, 0),
+			Position = UDim2.fromOffset(72, if hasTitle then 6 else 0),
+			FrameSize = if hasTitle then UDim2.new(1, -190, 0, 20) else UDim2.new(1, -190, 1, 0),
 			Parent = row,
 		})
+		if entry.Title then
+			Util.label({
+				Text = entry.Title,
+				Size = 12,
+				Color = Colors.TextMuted,
+				Position = UDim2.fromOffset(72, 26),
+				FrameSize = UDim2.new(1, -190, 0, 16),
+				Parent = row,
+			})
+		end
 		Util.label({
 			Text = signedRx(entry.Realized),
 			Size = 15,

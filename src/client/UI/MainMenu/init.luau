@@ -20,6 +20,8 @@ local Util = require(UI.Util)
 
 local AlertDialog = require(script.AlertDialog)
 local BottomBar = require(script.BottomBar)
+local CareerCard = require(script.CareerCard)
+local CareerDialog = require(script.CareerDialog)
 local CoinView = require(script.CoinView)
 local FavoritesPage = require(script.FavoritesPage)
 local DiscoverPage = require(script.DiscoverPage)
@@ -93,6 +95,8 @@ export type Handle = {
 	-- Elementy strony pokazywane w samouczku i przejście na Discover.
 	Targets: { [string]: GuiObject },
 	ShowDiscover: () -> (),
+	-- Otwiera okno wyboru ścieżki Trader Career.
+	OpenCareer: () -> (),
 }
 
 function MainMenu.mount(): Handle
@@ -152,6 +156,7 @@ function MainMenu.mount(): Handle
 	local upgradesPage: UpgradesPage.UpgradesPage
 	local sendPanel: SendPanel.SendPanel
 	local alertDialog: AlertDialog.AlertDialog
+	local careerDialog: CareerDialog.CareerDialog
 	local handle: Handle
 
 	local function render(page: Page)
@@ -260,6 +265,13 @@ function MainMenu.mount(): Handle
 	discover.Frame.Parent = content
 	pages.Discover = discover.Frame
 
+	local function openCareer()
+		if not locked then
+			careerDialog.Open()
+		end
+	end
+	CareerCard.new(navigation, openCoin, openCareer).Frame.Parent = discover.Targets.Side
+
 	favoritesPage = FavoritesPage.new(openCoin, navigation.Discover)
 	favoritesPage.Frame.Parent = content
 	pages.Favorites = favoritesPage.Frame
@@ -302,6 +314,7 @@ function MainMenu.mount(): Handle
 
 	sendPanel = SendPanel.new(site)
 	alertDialog = AlertDialog.new(site)
+	careerDialog = CareerDialog.new(site)
 	AlertBanner.mount(site)
 	Remotes.PulseRadar.OnClientEvent:Connect(function(notice: any)
 		if typeof(notice) == "table" and typeof(notice.Ticker) == "string" then
@@ -373,6 +386,7 @@ function MainMenu.mount(): Handle
 		Root = root,
 		Targets = targets,
 		ShowDiscover = navigation.Discover,
+		OpenCareer = openCareer,
 		Lock = function(path: string)
 			locked = true
 			browser.SetPath(path)

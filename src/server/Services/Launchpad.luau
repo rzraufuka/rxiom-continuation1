@@ -20,6 +20,7 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Bots = require(script.Parent.Bots)
+local Career = require(script.Parent.Career)
 local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
@@ -39,6 +40,8 @@ export type Entry = {
 	Tokens: number,
 	Migrated: boolean,
 	MigratedAt: number?,
+	-- First purchase by another player. Persistent like Migrated so the creator is credited on any server.
+	FirstBuyerAt: number?,
 	UpdatedAt: number,
 }
 
@@ -51,6 +54,8 @@ local MAX_ENTRIES = 1000
 local PRUNE_MIN_AGE = 600
 -- Coiny z innych serwerów stworzone niedawno trafiają od razu na rynek tego serwera.
 local FRESH_SECONDS = 1800
+-- How often online creators are checked for Career credit from events on other servers.
+local CREDIT_SECONDS = 5
 
 local LAUNCH = Config.Launch
 local START_PRICE = LAUNCH.StartMarketCap / Config.UsdPerRx / Config.TotalSupply
@@ -105,6 +110,7 @@ local function sanitizeEntry(e: any): Entry?
 		Tokens = e.Tokens,
 		Migrated = e.Migrated == true,
 		MigratedAt = if finite(e.MigratedAt) then e.MigratedAt else nil,
+		FirstBuyerAt = if finite(e.FirstBuyerAt) then e.FirstBuyerAt else nil,
 		UpdatedAt = if finite(e.UpdatedAt) then e.UpdatedAt else e.CreatedAt,
 	}
 end
@@ -216,8 +222,52 @@ function Launchpad.tick()
 			entry.MigratedAt = Market.now()
 			pending[ticker] = true
 			notifyAll("Success", `{ticker} completed its bonding curve and migrated`)
+			local creator = Players:GetPlayerByUserId(entry.CreatorId)
+			if creator then
+				Career.complete(creator, "Graduate")
+			end
 		end
 	end
+end
+
+-- Credits online creators for events that happened on another server or while they were offline.
+-- Only entries of online creators do any work, and complete() is idempotent.
+local function creditCreators()
+	local online: { [number]: Player } = {}
+	for _, player in Players:GetPlayers() do
+		online[player.UserId] = player
+	end
+	if next(online) == nil then
+		return
+	end
+	for _, entry in known do
+		local creator = online[entry.CreatorId]
+		if creator then
+			Career.complete(creator, "Launch")
+			if entry.FirstBuyerAt then
+				Career.complete(creator, "FirstHolder")
+			end
+			if entry.Migrated then
+				Career.complete(creator, "Graduate")
+			end
+		end
+	end
+end
+
+-- Another real player bought the coin (market buy or filled limit buy). The first such purchase is
+-- stored in the registry, and the creator is credited right away if on this server.
+function Launchpad.noteBuyer(ticker: string, buyer: Player): boolean
+	local entry = known[ticker]
+	if not entry or entry.FirstBuyerAt or entry.CreatorId == buyer.UserId then
+		return false
+	end
+	entry.FirstBuyerAt = Market.now()
+	pending[ticker] = true
+	local creator = Players:GetPlayerByUserId(entry.CreatorId)
+	if creator then
+		Career.complete(creator, "FirstHolder")
+	end
+	return true
 end
 
 -- Usuwa nadmiar wpisów: najpierw najdawniej aktywne niemigrowane, potem najstarsze migrowane.
@@ -264,6 +314,9 @@ local function merge(entries: { [string]: any })
 			mine.Migrated = true
 			mine.MigratedAt = entry.MigratedAt
 		end
+		if mine and entry.FirstBuyerAt and (not mine.FirstBuyerAt or entry.FirstBuyerAt < mine.FirstBuyerAt) then
+			mine.FirstBuyerAt = entry.FirstBuyerAt
+		end
 	end
 end
 
@@ -304,6 +357,10 @@ local function save()
 			if typeof(previous) == "table" and previous.Migrated == true and not write.Migrated then
 				write.Migrated = true
 				write.MigratedAt = previous.MigratedAt
+			end
+			if typeof(previous) == "table" and finite(previous.FirstBuyerAt) then
+				local own = write.FirstBuyerAt
+				write.FirstBuyerAt = if own then math.min(own, previous.FirstBuyerAt) else previous.FirstBuyerAt
 			end
 			data.Coins[ticker] = write
 		end
@@ -504,6 +561,7 @@ local function createCoin(player: Player, request: any): ActionResult
 	activate(entry)
 	Snipers.onLaunch(ticker, player)
 	prune()
+	Career.complete(player, "Launch")
 	pushPortfolio(player)
 	notifyAll("Info", `{player.DisplayName} launched {ticker} on Pulse`, player)
 	-- Pulse Radar: gracze z tym ulepszeniem dostają baner z przyciskiem do szybkiego zakupu.
@@ -521,6 +579,12 @@ function Launchpad.start(push: (player: Player) -> ())
 	pushPortfolio = push
 	Remotes.CreateCoin.OnServerInvoke = createCoin
 	Snipers.start()
+	task.spawn(function()
+		while true do
+			task.wait(CREDIT_SECONDS)
+			creditCreators()
+		end
+	end)
 	task.spawn(function()
 		while true do
 			task.wait(SAVE_SECONDS)

@@ -48,4 +48,5 @@ return table.freeze({
 	DeleteAlert = func("DeleteAlert"), -- (id) -> ActionResult
 	BuyUpgrade = func("BuyUpgrade"), -- (id) -> ActionResult
 	SetFavorite = func("SetFavorite"), -- (ticker, enabled) -> (success, message?)
+	ChooseCareer = func("ChooseCareer"), -- (pathId) -> ActionResult
 })
