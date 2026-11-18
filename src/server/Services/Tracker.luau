@@ -13,6 +13,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserService = game:GetService("UserService")
 
+local Career = require(ReplicatedStorage.Shared.Career)
 local Coins = require(ReplicatedStorage.Shared.Coins)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
@@ -33,6 +34,7 @@ type Record = {
 	Volume: number,
 	Trades: number,
 	Favorites: { Types.FavoriteToken },
+	Title: string?,
 	UpdatedAt: number,
 }
 
@@ -135,6 +137,7 @@ local function liveRecord(player: Player, profile: PlayerData.Profile): Record
 		Volume = stats.Volume,
 		Trades = stats.Trades,
 		Favorites = Stats.favorites(stats, FAVORITES),
+		Title = profile.Career.Title,
 		UpdatedAt = workspace:GetServerTimeNow(),
 	}
 end
@@ -178,6 +181,7 @@ local function sanitizeRecord(userId: number, raw: any): Record?
 		Volume = raw.Volume,
 		Trades = raw.Trades,
 		Favorites = favorites,
+		Title = if Career.isTitle(raw.Title) then raw.Title else nil,
 		UpdatedAt = if finite(raw.UpdatedAt) then raw.UpdatedAt else 0,
 	}
 end
@@ -191,14 +195,15 @@ local function signature(record: Record): string
 		table.insert(favorites, f.Ticker)
 	end
 	return string.format(
-		"%s|%.4f|%.4f|%.4f|%d|%s|%s",
+		"%s|%.4f|%.4f|%.4f|%d|%s|%s|%s",
 		record.Wallet or "",
 		record.Value,
 		record.Realized,
 		record.Volume,
 		record.Trades,
 		table.concat(favorites, ","),
-		record.DisplayName
+		record.DisplayName,
+		record.Title or ""
 	)
 end
 
@@ -331,13 +336,18 @@ local function leaderboard(): { LeaderboardEntry }
 		return cached
 	end
 	local scores: { [number]: number? } = {}
+	local titles: { [number]: string? } = {}
 	for _, e in storedBoard do
 		scores[e.UserId] = e.Realized
+		-- Offline titles only come from records already cached; no extra DataStore reads per row.
+		local stored = recordCache[e.UserId]
+		titles[e.UserId] = if stored and stored.Record then stored.Record.Title else nil
 	end
 	for _, player in Players:GetPlayers() do
 		local profile = PlayerData.get(player)
 		if profile then
 			scores[player.UserId] = if profile.Public then profile.Stats.Realized else nil
+			titles[player.UserId] = profile.Career.Title
 			names[player.UserId] = { Name = player.Name, DisplayName = player.DisplayName }
 		end
 	end
@@ -346,10 +356,14 @@ local function leaderboard(): { LeaderboardEntry }
 		local known = names[id]
 		local realized = score or 0
 		if realized > 0 and known then
-			table.insert(
-				list,
-				{ Rank = 0, UserId = id, Name = known.Name, DisplayName = known.DisplayName, Realized = realized }
-			)
+			table.insert(list, {
+				Rank = 0,
+				UserId = id,
+				Name = known.Name,
+				DisplayName = known.DisplayName,
+				Realized = realized,
+				Title = titles[id],
+			})
 		end
 	end
 	table.sort(list, function(a, b)
@@ -394,6 +408,7 @@ local function fromRecord(record: Record, online: boolean): WalletProfile
 		Volume = record.Volume,
 		Trades = record.Trades,
 		Favorites = record.Favorites,
+		Title = record.Title,
 		Rank = rankOf(record.UserId),
 		UpdatedAt = record.UpdatedAt,
 	}

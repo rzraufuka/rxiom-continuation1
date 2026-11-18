@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local Career = require(ReplicatedStorage.Shared.Career)
 local Coins = require(ReplicatedStorage.Shared.Coins)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -35,6 +36,7 @@ export type Profile = {
 	-- Poziomy kupionych ulepszeń (Upgrades.luau).
 	Upgrades: { [string]: number },
 	Favorites: { string },
+	Career: Types.CareerState,
 }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -53,6 +55,7 @@ local MAX_FAVORITES = 100
 
 local PlayerData = {}
 PlayerData.Loaded = Signal.new() -- (player)
+PlayerData.FavoritesChanged = Signal.new() -- (player), after a favorite was added
 PlayerData.MaxReceived = MAX_RECEIVED
 
 local profiles: { [Player]: Profile } = {}
@@ -91,6 +94,7 @@ local function defaultProfile(): Profile
 		Alerts = {},
 		Upgrades = {},
 		Favorites = {},
+		Career = Career.default(),
 	}
 end
 
@@ -191,6 +195,7 @@ local function sanitize(data: any): Profile
 		Alerts = {},
 		Upgrades = {},
 		Favorites = sanitizeFavorites(data.Favorites or data.FavoriteTickers),
+		Career = Career.sanitize(data.Career),
 	}
 	if typeof(data.Received) == "table" then
 		for _, id in data.Received do
@@ -322,6 +327,7 @@ local function save(player: Player): boolean
 		Alerts = profile.Alerts,
 		Upgrades = profile.Upgrades,
 		Favorites = profile.Favorites,
+		Career = profile.Career,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload
@@ -355,6 +361,7 @@ local function setFavorite(player: Player, rawTicker: any, enabled: any): (boole
 			return false, `You can save up to {MAX_FAVORITES} favorites`
 		end
 		table.insert(profile.Favorites, ticker)
+		PlayerData.FavoritesChanged:Fire(player)
 	elseif index then
 		table.remove(profile.Favorites, index)
 	end

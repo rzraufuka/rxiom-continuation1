@@ -12,6 +12,7 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local Format = require(ReplicatedStorage.Shared.Format)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
+local Career = require(script.Parent.Career)
 local Market = require(script.Parent.Market)
 local PlayerData = require(script.Parent.PlayerData)
 
@@ -87,6 +88,7 @@ local function create(player: Player, request: any): ActionResult
 		return fail("Pick an alert type")
 	end
 	table.insert(profile.Alerts, alert)
+	Career.complete(player, "Alert")
 	pushPortfolio(player)
 	return { Ok = true, Ticker = ticker }
 end
@@ -127,6 +129,7 @@ function Alerts.check(player: Player): boolean
 				MarketCap = mc,
 				Percent = alert.Percent,
 			})
+			Career.complete(player, "AlertTriggered")
 		else
 			i += 1
 		end
