@@ -413,10 +413,63 @@ function Icons.help(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
+-- Punkty łuku od kąta `from` do `to` (stopnie, oś Y w dół) dopisywane do wielokąta.
+local function arc(points: { Vector2 }, center: Vector2, radius: number, from: number, to: number, steps: number)
+	for i = 0, steps do
+		local a = math.rad(from + (to - from) * i / steps)
+		table.insert(points, center + Vector2.new(math.cos(a), math.sin(a)) * radius)
+	end
+end
+
+-- Obcina wielokąt do półpłaszczyzny y <= maxY.
+local function clipBelow(polygon: { Vector2 }, maxY: number): { Vector2 }
+	local out = {}
+	for i, a in polygon do
+		local b = polygon[i % #polygon + 1]
+		if a.Y <= maxY then
+			table.insert(out, a)
+		end
+		if (a.Y <= maxY) ~= (b.Y <= maxY) then
+			table.insert(out, a:Lerp(b, (maxY - a.Y) / (b.Y - a.Y)))
+		end
+	end
+	return out
+end
+
+-- Wallet silhouette: body with a clasp on the right and two cards tilted behind it. Drawn on a
+-- 16-unit grid with gaps of whole units, so they survive one strip per pixel row at small sizes.
+local WALLET_POLYGONS = (function(): { { Vector2 } }
+	local body: { Vector2 } = { Vector2.new(0.7, 5) }
+	arc(body, Vector2.new(13.2, 7), 2, -90, 0, 6)
+	-- Notch around the clasp, open to the right edge.
+	table.insert(body, Vector2.new(15.2, 8.2))
+	arc(body, Vector2.new(12.1, 10.5), 2.3, -90, -270, 10)
+	table.insert(body, Vector2.new(15.2, 12.8))
+	arc(body, Vector2.new(13.2, 13.9), 2, 0, 90, 6)
+	table.insert(body, Vector2.new(0.7, 15.9))
+
+	-- Edges sit between row centres at 14, 16, 18 and 20 px so every gap keeps a full row.
+	local clasp: { Vector2 } = { Vector2.new(15.6, 9.05) }
+	arc(clasp, Vector2.new(12.1, 10.5), 1.45, -90, -270, 8)
+	table.insert(clasp, Vector2.new(15.6, 11.95))
+
+	local hole: { Vector2 } = {}
+	arc(hole, Vector2.new(12.1, 10.5), 0.6, 0, 330, 11)
+
+	-- Cards: one tilted stack along a 29° axis from its top corner, cut off one row above the body.
+	-- The reference's thin stripes between cards vanish below ~24 px, so the stack is solid.
+	local corner = Vector2.new(9.4, 0.55)
+	local angle = math.rad(29)
+	local along = Vector2.new(-math.cos(angle), math.sin(angle))
+	local across = Vector2.new(math.sin(angle), math.cos(angle)) * 3.5
+	local cards = clipBelow({ corner, corner + across, corner + across + along * 12, corner + along * 12 }, 3.9)
+	return { body, clasp, hole, cards }
+end)()
+local WALLET_GRID = Rect.new(0, 0, 16, 16)
+
 function Icons.wallet(size: number, color: Color3, order: number?): Frame
 	local frame = box("WalletIcon", size, order)
-	outline(frame, Vector2.new(0, size * 0.18), Vector2.new(size, size * 0.72), color, 3)
-	outline(frame, Vector2.new(size * 0.55, size * 0.4), Vector2.new(size * 0.45, size * 0.28), color, 2)
+	rasterize(frame, WALLET_POLYGONS, WALLET_GRID, math.max(8, math.round(size)), color)
 	return frame
 end
 
