@@ -397,15 +397,16 @@ function Icons.dot(size: number, color: Color3, order: number?): Frame
 	}, { Util.round() })
 end
 
--- Kółko ze znakiem zapytania.
+-- A bare "?" without a ring: a 1.5 px UIStroke circle looks lopsided at this size.
+-- In Builder Sans Bold the glyph is ~0.56 of the line height and sits centred in it, so
+-- TextSize 1.4x makes the "?" about 0.8 of the box tall.
 function Icons.help(size: number, color: Color3, order: number?): Frame
 	local frame = box("HelpIcon", size, order)
-	outline(frame, Vector2.zero, Vector2.new(size, size), color, size, 1.5)
 	create("TextLabel", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
 		Text = "?",
-		TextSize = size * 0.7,
+		TextSize = math.round(size * 1.4),
 		FontFace = Fonts.Bold,
 		TextColor3 = color,
 		Parent = frame,
