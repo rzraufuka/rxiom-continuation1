@@ -266,8 +266,9 @@ function TopBar.new(nav: Navigation): TopBar
 	local send = pillButton("Send", 3)
 	Util.padding(0, 16, 0, 14).Parent = send
 	Util.hlist(8).Parent = send
-	Icons.arrow(18, Colors.Text, "Right", 2).Parent = send
 	Util.text({ Text = "Send", Size = 16, Font = Fonts.SemiBold, Order = 1, Parent = send })
+	-- Vector RXI coin: the uploaded logo (Theme.CoinImage) has a black background Roblox can't remove.
+	Icons.currency(18, 2).Parent = send
 	Util.hoverBackground(send, Colors.Elevated, Colors.Border)
 	send.Parent = right
 	send.Activated:Connect(nav.Send)

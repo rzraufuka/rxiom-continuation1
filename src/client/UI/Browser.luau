@@ -110,8 +110,11 @@ function Browser.new(callbacks: Callbacks): Browser
 	forwardButton.Activated:Connect(callbacks.Forward)
 
 	-- Nieaktywna strzałka jak w Chrome: przygaszona, ale wciąż czytelna.
-	local function setIconColor(icon: ImageLabel, enabled: boolean)
-		icon.ImageColor3 = if enabled then Colors.Text else DISABLED_ICON
+	local function setIconColor(icon: Frame, enabled: boolean)
+		local image = icon:FindFirstChildOfClass("ImageLabel")
+		if image then
+			image.ImageColor3 = if enabled then Colors.Text else DISABLED_ICON
+		end
 	end
 
 	return {
