@@ -64,7 +64,9 @@ function CareerDialog.new(parent: GuiObject): CareerDialog
 		ZIndex = 40,
 		Parent = parent,
 	})
-	local dialog: CanvasGroup = create("CanvasGroup", {
+	-- A plain Frame, not a CanvasGroup: a CanvasGroup renders into a texture that is resampled
+	-- (and downsized above 512 px on lower graphics levels), which blurred and shifted the text.
+	local dialog: Frame = create("Frame", {
 		Name = "Dialog",
 		Active = true,
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -72,7 +74,6 @@ function CareerDialog.new(parent: GuiObject): CareerDialog
 		Size = UDim2.fromOffset(WIDTH, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Colors.Surface,
-		GroupTransparency = 1,
 		Parent = overlay,
 	}, {
 		Util.corner(18),
@@ -302,8 +303,8 @@ function CareerDialog.new(parent: GuiObject): CareerDialog
 			return
 		end
 		open = false
-		tween(dialog, 0.2, { GroupTransparency = 1 }, Enum.EasingStyle.Quad)
-		tween(dialogScale, 0.2, { Scale = 0.96 }, Enum.EasingStyle.Quad)
+		-- Without a CanvasGroup the card can't fade, so it goes at once and only the dim fades out.
+		dialog.Visible = false
 		tween(overlay, 0.2, { BackgroundTransparency = 1 }, Enum.EasingStyle.Quad)
 		task.delay(0.2, function()
 			if not open then
@@ -371,10 +372,9 @@ function CareerDialog.new(parent: GuiObject): CareerDialog
 			refresh()
 			open = true
 			overlay.Visible = true
-			dialog.GroupTransparency = 1
+			dialog.Visible = true
 			dialogScale.Scale = 0.94
 			tween(overlay, 0.25, { BackgroundTransparency = 0.35 }, Enum.EasingStyle.Quad)
-			tween(dialog, 0.3, { GroupTransparency = 0 })
 			tween(dialogScale, 0.35, { Scale = 1 }, Enum.EasingStyle.Back)
 		end,
 		Close = hide,
