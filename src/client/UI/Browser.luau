@@ -45,7 +45,7 @@ local function toolButton(name: string, order: number): TextButton
 	return button
 end
 
-local function center(icon: Frame, parent: Instance)
+local function center(icon: GuiObject, parent: Instance)
 	icon.AnchorPoint = Vector2.new(0.5, 0.5)
 	icon.Position = UDim2.fromScale(0.5, 0.5)
 	icon.Parent = parent
@@ -109,13 +109,9 @@ function Browser.new(callbacks: Callbacks): Browser
 	backButton.Activated:Connect(callbacks.Back)
 	forwardButton.Activated:Connect(callbacks.Forward)
 
-	local function setIconColor(icon: Frame, enabled: boolean)
-		for _, part in icon:GetChildren() do
-			if part:IsA("Frame") then
-				-- Nieaktywna strzałka jak w Chrome: przygaszona, ale wciąż czytelna.
-				part.BackgroundColor3 = if enabled then Colors.Text else DISABLED_ICON
-			end
-		end
+	-- Nieaktywna strzałka jak w Chrome: przygaszona, ale wciąż czytelna.
+	local function setIconColor(icon: ImageLabel, enabled: boolean)
+		icon.ImageColor3 = if enabled then Colors.Text else DISABLED_ICON
 	end
 
 	return {

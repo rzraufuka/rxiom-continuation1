@@ -544,45 +544,23 @@ function Icons.close(size: number, color: Color3, order: number?): Frame
 end
 
 -- Strzałka (wstecz / dalej w pasku przeglądarki, przycisk Send): długi trzon i dwa ramiona pod 45°
--- schodzące się w grocie, z zaokrąglonymi końcami. Ramiona są z nachodzących na siebie kropek, a nie
--- z obróconej ramki: cienka obrócona ramka renderuje się w Robloxie jako poszarpane schodki.
-function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", order: number?): Frame
-	local frame = box("ArrowIcon", size, order)
-	local f = size / 24
-	local t = math.max(2, size / 8)
-	local flip = direction == "Right"
-	local function at(x: number, y: number): Vector2
-		return Vector2.new(if flip then x * f else size - x * f, y * f)
-	end
-	local tip = at(20.5, 12)
-	-- Trzon: pozioma ramka z zaokrąglonymi końcami.
-	local tail = at(3.5, 12)
-	create("Frame", {
-		Name = "Shaft",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromOffset((tail.X + tip.X) / 2, tip.Y),
-		Size = UDim2.fromOffset(math.abs(tip.X - tail.X) + t, t),
-		BackgroundColor3 = color,
-		BorderSizePixel = 0,
-		Parent = frame,
-	}, { Util.round() })
-	for _, wing in { at(14.5, 6), at(14.5, 18) } do
-		local d = wing - tip
-		local steps = math.max(2, math.ceil(d.Magnitude / (t * 0.25)))
-		for i = 0, steps do
-			local p = tip + d * (i / steps)
-			create("Frame", {
-				Name = "Wing",
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Position = UDim2.fromOffset(p.X, p.Y),
-				Size = UDim2.fromOffset(t, t),
-				BackgroundColor3 = color,
-				BorderSizePixel = 0,
-				Parent = frame,
-			}, { Util.round() })
-		end
-	end
-	return frame
+-- z zaokrąglonymi końcami.
+-- Built-in client texture: wings built from frames snap to whole pixels and look jagged at 14-20 px.
+-- The 48 px texture is cropped to its centred 36 px glyph so the arrow fills the box like before.
+-- "Right" is the same image rotated, so both directions match exactly.
+function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", order: number?): ImageLabel
+	return create("ImageLabel", {
+		Name = "ArrowIcon",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(size, size),
+		LayoutOrder = order or 0,
+		Image = "rbxasset://textures/ui/LuaChat/icons/ic-back-android@2x.png",
+		ImageRectOffset = Vector2.new(6, 6),
+		ImageRectSize = Vector2.new(36, 36),
+		ImageColor3 = color,
+		Rotation = if direction == "Right" then 180 else 0,
+		ScaleType = Enum.ScaleType.Fit,
+	})
 end
 
 -- Duszek Ghostbox (portfel w grze): ręce w górę, jedno oko większe, uśmiech z różowym językiem.
