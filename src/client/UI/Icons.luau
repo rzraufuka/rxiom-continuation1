@@ -642,26 +642,87 @@ function Icons.plus(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
--- Dzwonek (alerty cenowe): kopuła z zaokrągloną górą, rondo na dole i serce dzwonu.
--- `filled`: pełny (są ustawione alerty) albo tylko kontur.
+-- Dzwonek (alerty cenowe), traced from the reference bell: knob, dome with a flared rim, then a
+-- half-ellipse clapper below a gap that stays at least one pixel row at 14-26 px.
+-- `filled`: pełny (są ustawione alerty) albo kontur: the hole is the body shrunk by a fixed stroke.
+local BELL_BODY = {
+	Vector2.new(0.4911, 0.0464),
+	Vector2.new(0.4714, 0.0536),
+	Vector2.new(0.4536, 0.0696),
+	Vector2.new(0.4446, 0.0964),
+	Vector2.new(0.3857, 0.1143),
+	Vector2.new(0.3232, 0.1500),
+	Vector2.new(0.2804, 0.1893),
+	Vector2.new(0.2446, 0.2375),
+	Vector2.new(0.2214, 0.2875),
+	Vector2.new(0.2089, 0.3339),
+	Vector2.new(0.2054, 0.3589),
+	Vector2.new(0.2036, 0.5393),
+	Vector2.new(0.1982, 0.5821),
+	Vector2.new(0.1857, 0.6321),
+	Vector2.new(0.1607, 0.6857),
+	Vector2.new(0.1304, 0.7268),
+	Vector2.new(0.0804, 0.7732),
+	Vector2.new(0.0554, 0.7911),
+	Vector2.new(0.0429, 0.7946),
+	Vector2.new(0.9554, 0.7946),
+	Vector2.new(0.9429, 0.7911),
+	Vector2.new(0.9179, 0.7732),
+	Vector2.new(0.8679, 0.7268),
+	Vector2.new(0.8375, 0.6857),
+	Vector2.new(0.8125, 0.6321),
+	Vector2.new(0.8000, 0.5821),
+	Vector2.new(0.7946, 0.5393),
+	Vector2.new(0.7929, 0.3589),
+	Vector2.new(0.7893, 0.3339),
+	Vector2.new(0.7768, 0.2875),
+	Vector2.new(0.7536, 0.2375),
+	Vector2.new(0.7179, 0.1893),
+	Vector2.new(0.6750, 0.1500),
+	Vector2.new(0.6125, 0.1143),
+	Vector2.new(0.5536, 0.0964),
+	Vector2.new(0.5482, 0.0750),
+	Vector2.new(0.5321, 0.0571),
+	Vector2.new(0.5143, 0.0482),
+}
+local BELL_HOLE = {
+	Vector2.new(0.2333, 0.7161),
+	Vector2.new(0.7650, 0.7161),
+	Vector2.new(0.7384, 0.6584),
+	Vector2.new(0.7220, 0.5919),
+	Vector2.new(0.7161, 0.5401),
+	Vector2.new(0.7143, 0.3649),
+	Vector2.new(0.7027, 0.3145),
+	Vector2.new(0.6857, 0.2778),
+	Vector2.new(0.6592, 0.2421),
+	Vector2.new(0.6284, 0.2139),
+	Vector2.new(0.5812, 0.1869),
+	Vector2.new(0.5238, 0.1692),
+	Vector2.new(0.4991, 0.1530),
+	Vector2.new(0.4745, 0.1691),
+	Vector2.new(0.4170, 0.1869),
+	Vector2.new(0.3698, 0.2139),
+	Vector2.new(0.3390, 0.2421),
+	Vector2.new(0.3125, 0.2778),
+	Vector2.new(0.2955, 0.3145),
+	Vector2.new(0.2860, 0.3498),
+	Vector2.new(0.2821, 0.5401),
+	Vector2.new(0.2762, 0.5919),
+	Vector2.new(0.2598, 0.6584),
+}
+local BELL_CLAPPER = (function(): { Vector2 }
+	local points = {}
+	for i = 0, 24 do
+		local a = math.pi * i / 24
+		table.insert(points, Vector2.new(0.4991 + 0.1214 * math.cos(a), 0.8571 + 0.1 * math.sin(a)))
+	end
+	return points
+end)()
+
 function Icons.bell(size: number, color: Color3, filled: boolean?, order: number?): Frame
 	local frame = box("BellIcon", size, order)
-	local function part(pos: Vector2, extent: Vector2, radius: UDim, solid: boolean)
-		local p: Frame = create("Frame", {
-			Position = UDim2.fromScale(pos.X, pos.Y),
-			Size = UDim2.fromScale(extent.X, extent.Y),
-			BackgroundColor3 = color,
-			BackgroundTransparency = if solid then 0 else 1,
-			BorderSizePixel = 0,
-			Parent = frame,
-		}, { create("UICorner", { CornerRadius = radius }) })
-		if not solid then
-			create("UIStroke", { Color = color, Thickness = 1.6, Parent = p })
-		end
-	end
-	part(Vector2.new(0.22, 0.12), Vector2.new(0.56, 0.62), UDim.new(0.5, 0), filled == true)
-	part(Vector2.new(0.1, 0.62), Vector2.new(0.8, 0.12), UDim.new(1, 0), true)
-	part(Vector2.new(0.41, 0.78), Vector2.new(0.18, 0.16), UDim.new(1, 0), true)
+	local polygons = if filled == true then { BELL_BODY, BELL_CLAPPER } else { BELL_BODY, BELL_HOLE, BELL_CLAPPER }
+	rasterize(frame, polygons, Rect.new(0, 0, 1, 1), math.max(8, math.round(size)), color)
 	return frame
 end
 
