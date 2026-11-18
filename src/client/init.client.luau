@@ -11,6 +11,7 @@ end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Career = require(ReplicatedStorage.Shared.Career)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
 local Market = require(script.State.Market)
@@ -31,7 +32,11 @@ local menu = MainMenu.mount()
 -- Po zalogowaniu nowy gracz od razu dostaje samouczek na Discover.
 Login.show(menu, function()
 	if not Portfolio.State.TutorialDone then
-		Tutorial.start(menu)
+		Tutorial.start(menu, function()
+			if Career.sanitize(Portfolio.State.Career).Path == nil then
+				menu.OpenCareer()
+			end
+		end)
 	end
 end)
 

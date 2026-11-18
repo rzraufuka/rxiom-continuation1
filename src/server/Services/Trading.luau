@@ -12,6 +12,7 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
 local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Amm = require(ReplicatedStorage.Shared.Amm)
+local Career = require(script.Parent.Career)
 local Launchpad = require(script.Parent.Launchpad)
 local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
@@ -91,6 +92,7 @@ local function portfolio(player: Player): Types.PortfolioState?
 		Alerts = profile.Alerts,
 		Upgrades = profile.Upgrades,
 		Favorites = profile.Favorites,
+		Career = profile.Career,
 	}
 end
 
@@ -233,6 +235,8 @@ end
 -- otrzymane RX. `poolRx` to wartość bez prowizji (dla historii wejść).
 local function settle(player: Player, profile: Profile, order: BookOrder, tokens: number, rx: number, poolRx: number)
 	local p = position(profile, order.Ticker)
+	-- Average entry price must be read before recordFill changes it.
+	local profitable = order.Side == "Sell" and p.BuyTokens > 0 and order.Price > p.BuyValue / p.BuyTokens
 	if order.Side == "Buy" then
 		p.Tokens += tokens
 		p.BoughtRx += rx
@@ -242,6 +246,14 @@ local function settle(player: Player, profile: Profile, order: BookOrder, tokens
 	end
 	recordFill(p, order.Side, poolRx, tokens)
 	Tracker.record(player, order.Ticker, order.Side, tokens, rx)
+	-- Trader chapters count limit order fills only, never market trades or TP/SL.
+	if order.Side == "Buy" then
+		Career.complete(player, "LimitPlaced")
+		Career.complete(player, "LimitBuyFilled")
+		Launchpad.noteBuyer(order.Ticker, player)
+	elseif profitable then
+		Career.complete(player, "LimitProfit")
+	end
 end
 
 -- Wystawia zlecenie w księdze (nowe albo wczytane z profilu) i rozlicza część wykonaną od razu.
@@ -352,6 +364,9 @@ local function placeLimitOrder(player: Player, request: any): ActionResult
 	end
 
 	table.insert(profile.Orders, order)
+	if order.Side == "Buy" then
+		Career.complete(player, "LimitPlaced")
+	end
 	local tokens, rx = activate(player, profile, order)
 	pushPortfolio(player)
 	return { Ok = true, Tokens = tokens, Rx = rx }
@@ -483,6 +498,9 @@ local function submitTrade(player: Player, request: any): ActionResult
 		p.BoughtRx += spent + fees - back
 		recordFill(p, "Buy", spent * (1 - FEE), tokens)
 		Tracker.record(player, ticker, "Buy", tokens, spent + fees - back)
+		if tokens > 0 then
+			Launchpad.noteBuyer(ticker, player)
+		end
 
 		local bracket = request.Bracket
 		if typeof(bracket) == "table" and finite(bracket.TakeProfit) and finite(bracket.StopLoss) then
@@ -650,6 +668,7 @@ end
 function Trading.start()
 	Market.setHolderCounter(PlayerData.countHolders)
 	OrderBook.setFillHandler(onMakerFill)
+	Career.start(pushPortfolio)
 	Launchpad.start(pushPortfolio)
 	Tracker.start(Trading.portfolioValue, pushPortfolio)
 	Transfer.start(pushPortfolio)
