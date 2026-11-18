@@ -106,6 +106,13 @@ export type BookOrder = {
 	CreatedAt: number,
 }
 
+-- Trader Career progress (see Shared.Career). Done: chapter id -> os.time() of completion.
+export type CareerState = {
+	Path: string?,
+	Done: { [string]: number },
+	Title: string?,
+}
+
 export type PortfolioState = {
 	Balance: number,
 	Positions: { [string]: Position },
@@ -122,6 +129,7 @@ export type PortfolioState = {
 	Alerts: { PriceAlert },
 	Upgrades: { [string]: number },
 	Favorites: { string },
+	Career: CareerState,
 }
 
 -- Statystyki handlu gracza (zapisywane w profilu). Basis: tokeny i ich koszt w RX do liczenia
@@ -150,6 +158,8 @@ export type WalletProfile = {
 	Volume: number?,
 	Trades: number?,
 	Favorites: { FavoriteToken }?,
+	-- Latest Trader Career title.
+	Title: string?,
 	Rank: number?,
 	-- Czas serwera, z którego pochodzą dane gracza offline.
 	UpdatedAt: number?,
@@ -163,6 +173,7 @@ export type LeaderboardEntry = {
 	Name: string,
 	DisplayName: string,
 	Realized: number,
+	Title: string?,
 }
 
 export type LoginResult = {
