@@ -29,6 +29,8 @@ local AlertBanner = {}
 local container: Frame? = nil
 local sound: Sound? = nil
 local order = 0
+-- Pushed down while the news banner occupies the top of the screen.
+local topOffset = 12
 
 local function tween(instance: Instance, seconds: number, props: { [string]: any }, style: Enum.EasingStyle?, direction: Enum.EasingDirection?)
 	TweenService:Create(instance, TweenInfo.new(seconds, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out), props):Play()
@@ -38,7 +40,7 @@ function AlertBanner.mount(parent: Instance)
 	container = create("Frame", {
 		Name = "AlertBanners",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 12),
+		Position = UDim2.new(0.5, 0, 0, topOffset),
 		Size = UDim2.fromOffset(WIDTH, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
@@ -46,6 +48,13 @@ function AlertBanner.mount(parent: Instance)
 		Parent = parent,
 	}, { Util.vlist(8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Top) })
 	sound = create("Sound", { Name = "AlertSound", SoundId = SOUND_ID, Volume = 0.7, Parent = SoundService })
+end
+
+function AlertBanner.setTopOffset(y: number)
+	topOffset = y
+	if container then
+		tween(container, 0.3, { Position = UDim2.new(0.5, 0, 0, y) }, Enum.EasingStyle.Quint)
+	end
 end
 
 type Banner = { Ticker: string, Title: string, Text: string, Accent: Color3, Action: string }
