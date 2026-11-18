@@ -1,0 +1,16 @@
+# Pliki miejsc/modeli budowane przez Rojo
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+*.rbxm
+*.rbxmx
+
+# Generowane lokalnie
+sourcemap.json
+roblox.yml
+/Packages
+/ServerPackages
+/DevPackages
+
+.DS_Store
