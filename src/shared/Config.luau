@@ -135,6 +135,22 @@ local Config = {
 		Bias = 0.3,
 		Boost = 2.5,
 	},
+
+	-- Since You Left: summary card after login for players away at least MinAway seconds.
+	Recap = {
+		MinAway = 600,
+		StudioMinAway = 30,
+		-- Price moves of held, favorite or own coins smaller than this (in %) are not listed.
+		MoveThreshold = 5,
+		MaxMovers = 3,
+		MaxNews = 2,
+		MaxItems = 6,
+		-- Seconds after the profile loads during which restored orders and inbox transfers are
+		-- collected before the summary is handed out.
+		Settle = 3,
+		-- Prices remembered per player for the next visit.
+		MaxPrices = 40,
+	},
 }
 
 return table.freeze(Config)
